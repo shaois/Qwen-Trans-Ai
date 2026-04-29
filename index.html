@@ -3,516 +3,756 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI 翻譯與寫作專家 | Groq LPU</title>
+  <title>AI 翻譯與寫作專家 | Groq</title>
   <style>
     :root {
-      /* 高對比配色方案 - 符合 WCAG AAA 標準 */
-      --bg: #ffffff;
-      --card: #f1f5f9;
-      --text: #0f172a;
-      --text-secondary: #334155;
-      --accent: #1d4ed8;
-      --accent-hover: #1e40af;
-      --border: #475569;
-      --border-focus: #0f172a;
-      --success: #15803d;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #dbeafe;
+      --bg: #fafafa;
+      --surface: #ffffff;
+      --surface-alt: #f5f5f5;
+      --text: #1f2937;
+      --text-secondary: #4b5563;
+      --text-light: #6b7280;
+      --border: #d1d5db;
+      --border-focus: #2563eb;
+      --success: #059669;
       --error: #dc2626;
-      --warning: #b45309;
-      --input-bg: #ffffff;
-      --shadow: rgba(15, 23, 42, 0.15);
+      --warning: #d97706;
+      --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     }
 
-    * { 
-      box-sizing: border-box; 
-      margin: 0; 
-      padding: 0; 
-      font-family: system-ui, -apple-system, "Microsoft JhengHei", "PingFang TC", sans-serif; 
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", "PingFang TC", sans-serif;
     }
 
-    body { 
-      background: var(--bg); 
-      color: var(--text); 
-      min-height: 100vh; 
-      display: flex; 
-      flex-direction: column; 
-      align-items: center; 
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
       padding: 2rem 1rem;
-      font-size: 18px;
       line-height: 1.6;
     }
 
-    .container { 
-      width: 100%; 
-      max-width: 1000px; 
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
     }
 
-    header { 
-      text-align: center; 
-      margin-bottom: 2rem; 
-      padding: 1.5rem;
-      border-bottom: 3px solid var(--border);
+    /* 標籤頁導航 */
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      background: var(--surface);
+      padding: 0.5rem;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      width: fit-content;
     }
 
-    header h1 { 
-      font-size: 2.2rem; 
-      margin-bottom: 0.5rem; 
-      color: var(--text);
-      font-weight: 800;
-    }
-
-    header p {
-      font-size: 1.2rem;
+    .tab {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      background: transparent;
       color: var(--text-secondary);
+      font-size: 1rem;
       font-weight: 600;
-    }
-
-    .api-banner { 
-      background: #fef3c7; 
-      border: 3px solid var(--warning); 
-      color: #000000; 
-      padding: 1rem 1.5rem; 
-      border-radius: 12px; 
-      font-size: 1.1rem; 
-      text-align: center; 
-      margin-bottom: 1.5rem; 
       cursor: pointer;
-      font-weight: 700;
-      box-shadow: 0 4px 6px var(--shadow);
+      border-radius: 8px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
-    .api-banner:hover { 
+    .tab:hover {
+      background: var(--surface-alt);
+      color: var(--text);
+    }
+
+    .tab.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .tab:focus {
+      outline: 3px solid var(--primary-light);
+      outline-offset: 2px;
+    }
+
+    /* API Key 提示 */
+    .api-banner {
+      background: #fef3c7;
+      border: 2px solid var(--warning);
+      color: #000;
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      cursor: pointer;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+
+    .api-banner:hover {
       background: #fde68a;
-      transform: translateY(-2px);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow);
     }
 
     .api-banner.set {
-      background: #dcfce7;
+      background: #d1fae5;
       border-color: var(--success);
     }
 
-    .controls { 
-      display: flex; 
-      flex-wrap: wrap; 
-      gap: 1rem; 
-      margin-bottom: 1.5rem; 
+    /* 控制區 */
+    .controls {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
       align-items: center;
-      padding: 1.5rem;
-      background: var(--card);
+      flex-wrap: wrap;
+    }
+
+    .select-wrapper {
+      position: relative;
+      flex: 1;
+      min-width: 150px;
+      max-width: 250px;
+    }
+
+    select {
+      width: 100%;
+      padding: 0.75rem 2.5rem 0.75rem 1rem;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      font-size: 1rem;
+      color: var(--text);
+      cursor: pointer;
+      appearance: none;
+      font-weight: 500;
+    }
+
+    .select-wrapper::after {
+      content: "▼";
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      pointer-events: none;
+      font-size: 0.75rem;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    .swap-btn {
+      padding: 0.75rem;
+      border: 2px solid var(--border);
+      background: var(--surface);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1.25rem;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+    }
+
+    .swap-btn:hover {
+      background: var(--surface-alt);
+      border-color: var(--primary);
+      transform: rotate(180deg);
+    }
+
+    .model-badge {
+      margin-left: auto;
+      padding: 0.5rem 1rem;
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      color: var(--text-light);
+      font-family: monospace;
+    }
+
+    /* 編輯區 */
+    .editor-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .editor-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .editor-box {
+      background: var(--surface);
       border: 2px solid var(--border);
       border-radius: 12px;
-    }
-
-    select, button, textarea { 
-      background: var(--input-bg); 
-      color: var(--text); 
-      border: 2px solid var(--border); 
-      border-radius: 8px; 
-      padding: 0.8rem 1.2rem; 
-      font-size: 1.1rem;
-      font-weight: 600;
-    }
-
-    select { 
-      flex: 1; 
-      min-width: 150px;
-      cursor: pointer;
-    }
-
-    select:focus, textarea:focus {
-      outline: 3px solid var(--accent);
-      border-color: var(--border-focus);
-    }
-
-    button { 
-      background: var(--accent); 
-      color: white;
-      border: 2px solid var(--accent);
-      cursor: pointer; 
-      font-weight: 700; 
+      overflow: hidden;
+      box-shadow: var(--shadow);
       transition: all 0.2s;
-      font-size: 1.1rem;
-      padding: 0.8rem 1.5rem;
     }
 
-    button:hover { 
-      background: var(--accent-hover);
-      border-color: var(--accent-hover);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px var(--shadow);
+    .editor-box:focus-within {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 4px var(--primary-light);
     }
 
-    button:active {
-      transform: translateY(0);
+    .editor-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.25rem;
+      background: var(--surface-alt);
+      border-bottom: 2px solid var(--border);
     }
 
-    button:disabled { 
-      opacity: 0.6; 
-      cursor: not-allowed;
-      transform: none;
+    .editor-title {
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--text);
     }
 
-    .editor { 
-      display: grid; 
-      grid-template-columns: 1fr 1fr; 
-      gap: 1.5rem; 
+    .char-count {
+      font-size: 0.875rem;
+      color: var(--text-light);
+      font-weight: 500;
     }
 
-    @media (max-width: 768px) { 
-      .editor { 
-        grid-template-columns: 1fr; 
-      }
-      body {
-        font-size: 16px;
-      }
-      header h1 {
-        font-size: 1.8rem;
-      }
+    .copy-btn-small {
+      padding: 0.4rem 0.75rem;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
     }
 
-    textarea { 
-      width: 100%; 
-      min-height: 300px; 
-      resize: vertical; 
-      background: var(--input-bg); 
-      font-family: "Consolas", "Monaco", monospace; 
-      line-height: 1.8;
-      font-size: 1.1rem;
-      border: 3px solid var(--border);
-      padding: 1.2rem;
+    .copy-btn-small:hover {
+      background: var(--surface-alt);
+      border-color: var(--primary);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 300px;
+      padding: 1.25rem;
+      border: none;
+      resize: vertical;
+      font-size: 1.0625rem;
+      line-height: 1.7;
+      color: var(--text);
+      background: var(--surface);
     }
 
     textarea:focus {
       outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.2);
     }
 
-    .actions { 
-      display: flex; 
-      gap: 1rem; 
-      margin-top: 1.5rem; 
-      flex-wrap: wrap; 
+    textarea::placeholder {
+      color: var(--text-light);
     }
 
-    .status { 
-      margin-top: 1.5rem; 
-      font-size: 1.2rem; 
-      min-height: 2rem;
-      font-weight: 700;
-      padding: 1rem;
+    textarea[readonly] {
+      background: var(--surface-alt);
+    }
+
+    /* 按鈕區 */
+    .actions {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 0.875rem 2rem;
+      border: none;
       border-radius: 8px;
-      border: 2px solid transparent;
+      font-size: 1.0625rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
-    .status.loading { 
-      color: var(--accent); 
-      background: #eff6ff;
-      border-color: var(--accent);
+    .btn-primary {
+      background: var(--primary);
+      color: white;
     }
 
-    .status.error { 
-      color: var(--error); 
-      background: #fef2f2;
-      border-color: var(--error);
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
     }
 
-    .status.success { 
-      color: var(--success); 
-      background: #f0fdf4;
-      border-color: var(--success);
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
     }
 
-    .modal { 
-      display: none; 
-      position: fixed; 
-      inset: 0; 
-      background: rgba(0, 0, 0, 0.8); 
-      align-items: center; 
-      justify-content: center; 
-      z-index: 100; 
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text-secondary);
+      border: 2px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--surface-alt);
+      border-color: var(--text-light);
+    }
+
+    /* 狀態訊息 */
+    .status {
+      margin-top: 1.5rem;
+      padding: 1rem 1.25rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 1rem;
+      display: none;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .status.show {
+      display: flex;
+    }
+
+    .status.loading {
+      background: var(--primary-light);
+      color: var(--primary);
+      border: 2px solid var(--primary);
+    }
+
+    .status.success {
+      background: #d1fae5;
+      color: var(--success);
+      border: 2px solid var(--success);
+    }
+
+    .status.error {
+      background: #fee2e2;
+      color: var(--error);
+      border: 2px solid var(--error);
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
       padding: 1rem;
     }
 
-    .modal.active { 
-      display: flex; 
+    .modal.active {
+      display: flex;
     }
 
-    .modal-content { 
-      background: var(--bg); 
-      padding: 2.5rem; 
-      border-radius: 16px; 
-      width: 100%; 
+    .modal-content {
+      background: var(--surface);
+      padding: 2rem;
+      border-radius: 16px;
+      width: 100%;
       max-width: 500px;
-      border: 3px solid var(--border);
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+      box-shadow: var(--shadow-lg);
+      border: 2px solid var(--border);
     }
 
-    .modal-content h2 {
-      font-size: 1.8rem;
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: 700;
       margin-bottom: 1rem;
       color: var(--text);
     }
 
-    .modal-content p {
-      font-size: 1.1rem;
+    .modal-text {
       color: var(--text-secondary);
-      margin-bottom: 1rem;
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
     }
 
-    .modal-content a {
-      color: var(--accent);
-      font-weight: 700;
+    .modal-text a {
+      color: var(--primary);
+      font-weight: 600;
       text-decoration: underline;
     }
 
-    .modal-content input { 
-      width: 100%; 
-      margin: 1rem 0;
+    .modal input {
+      width: 100%;
       padding: 1rem;
-      font-size: 1.1rem;
-      border: 3px solid var(--border);
+      border: 2px solid var(--border);
       border-radius: 8px;
+      font-size: 1rem;
+      margin-bottom: 1.5rem;
+      font-family: monospace;
     }
 
-    .modal-content input:focus {
+    .modal input:focus {
       outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.2);
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px var(--primary-light);
     }
 
     .modal-buttons {
-      display: flex; 
+      display: flex;
       gap: 1rem;
-      margin-top: 1.5rem;
     }
 
     .modal-buttons button {
       flex: 1;
+      padding: 0.875rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
     }
 
-    .modal-buttons button.secondary {
-      background: var(--card);
-      color: var(--text);
+    .modal-buttons .btn-confirm {
+      background: var(--primary);
+      color: white;
+    }
+
+    .modal-buttons .btn-confirm:hover {
+      background: var(--primary-hover);
+    }
+
+    .modal-buttons .btn-cancel {
+      background: var(--surface-alt);
+      color: var(--text-secondary);
       border: 2px solid var(--border);
     }
 
-    .footer { 
-      margin-top: 3rem; 
-      font-size: 1rem; 
-      color: var(--text-secondary); 
-      text-align: center; 
-      line-height: 1.8;
-      padding: 2rem;
+    .modal-buttons .btn-cancel:hover {
+      background: var(--surface);
+      border-color: var(--text-light);
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 3rem;
+      padding: 1.5rem;
+      text-align: center;
+      color: var(--text-light);
+      font-size: 0.875rem;
       border-top: 2px solid var(--border);
-      font-weight: 600;
     }
 
-    /* 高對比模式 - 適合嚴重視力障礙 */
-    @media (prefers-contrast: high) {
-      :root {
-        --bg: #ffffff;
-        --card: #ffffff;
-        --text: #000000;
-        --border: #000000;
-        --accent: #0000cc;
-      }
-      
-      textarea, select, button {
-        border-width: 3px;
-      }
-    }
-
-    /* 列印樣式 */
-    @media print {
-      body {
-        background: white;
-        color: black;
-      }
-      .api-banner, .actions, .modal {
-        display: none;
-      }
-      textarea {
-        border: 2px solid black;
-        min-height: 200px;
-      }
+    /* 輔助功能 */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1>🌐 AI 翻譯與寫作專家</h1>
-      <p>基於 Groq LPU 加速引擎｜支援翻譯 & 專家級文稿潤飾</p>
-    </header>
+    <!-- 標籤頁 -->
+    <div class="tabs" role="tablist">
+      <button class="tab active" role="tab" aria-selected="true" data-mode="translate">
+        <span>🌐</span> 翻譯
+      </button>
+      <button class="tab" role="tab" aria-selected="false" data-mode="polish">
+        <span>✍️</span> 專家寫作
+      </button>
+      <button class="tab" role="tab" aria-selected="false" data-mode="refine">
+        <span>✨</span> 文稿潤飾
+      </button>
+    </div>
 
-    <div class="api-banner" id="apiBanner">🔑 尚未設定 Groq API Key｜點擊此處輸入</div>
+    <!-- API Key 提示 -->
+    <div class="api-banner" id="apiBanner" role="button" tabindex="0">
+      <span>🔑</span>
+      <span id="apiBannerText">尚未設定 Groq API Key｜點擊此處輸入</span>
+    </div>
 
+    <!-- 語言選擇 -->
     <div class="controls">
-      <label for="sourceLang" style="font-weight: 700; min-width: 100px;">來源語言：</label>
-      <select id="sourceLang">
-        <option value="auto">自動偵測</option>
-        <option value="English">英文</option>
-        <option value="Traditional Chinese">繁體中文</option>
-        <option value="Japanese">日文</option>
-        <option value="Korean">韓文</option>
-        <option value="French">法文</option>
-        <option value="German">德文</option>
-        <option value="Spanish">西班牙文</option>
-      </select>
-      
-      <span style="font-size: 1.5rem; font-weight: 800;">➜</span>
-      
-      <label for="targetLang" style="font-weight: 700; min-width: 100px;">目標語言：</label>
-      <select id="targetLang">
-        <option value="Traditional Chinese">繁體中文</option>
-        <option value="English">英文</option>
-        <option value="Japanese">日文</option>
-        <option value="Korean">韓文</option>
-        <option value="French">法文</option>
-        <option value="German">德文</option>
-        <option value="Spanish">西班牙文</option>
-      </select>
-    </div>
-
-    <div class="controls">
-      <label for="mode" style="font-weight: 700; min-width: 80px;">模式：</label>
-      <select id="mode">
-        <option value="translate">🔄 翻譯模式</option>
-        <option value="polish">✨ 專家寫作/潤飾模式</option>
-      </select>
-      
-      <label for="tone" style="font-weight: 700; min-width: 80px;">語氣：</label>
-      <select id="tone">
-        <option value="neutral">中性/預設</option>
-        <option value="formal">正式/商務</option>
-        <option value="academic">學術/嚴謹</option>
-        <option value="creative">創意/行銷</option>
-        <option value="concise">簡潔/精煉</option>
-      </select>
-    </div>
-
-    <div class="editor">
-      <div>
-        <label for="inputText" style="font-weight: 700; font-size: 1.2rem; margin-bottom: 0.5rem; display: block;">📝 輸入文字：</label>
-        <textarea id="inputText" placeholder="在此貼上或輸入原始文稿..."></textarea>
+      <div class="select-wrapper">
+        <select id="sourceLang" aria-label="來源語言">
+          <option value="auto">自動偵測</option>
+          <option value="English">英文</option>
+          <option value="Traditional Chinese">繁體中文</option>
+          <option value="Japanese">日文</option>
+          <option value="Korean">韓文</option>
+          <option value="French">法文</option>
+          <option value="German">德文</option>
+          <option value="Spanish">西班牙文</option>
+        </select>
       </div>
-      <div>
-        <label for="outputText" style="font-weight: 700; font-size: 1.2rem; margin-bottom: 0.5rem; display: block;">✨ 產出結果：</label>
-        <textarea id="outputText" placeholder="產出結果將顯示於此..." readonly style="background: #f8fafc;"></textarea>
+
+      <button class="swap-btn" id="swapBtn" aria-label="交換語言" title="交換語言">
+        ⇄
+      </button>
+
+      <div class="select-wrapper">
+        <select id="targetLang" aria-label="目標語言">
+          <option value="Traditional Chinese">繁體中文</option>
+          <option value="English">英文</option>
+          <option value="Japanese">日文</option>
+          <option value="Korean">韓文</option>
+          <option value="French">法文</option>
+          <option value="German">德文</option>
+          <option value="Spanish">西班牙文</option>
+        </select>
+      </div>
+
+      <div class="model-badge">llama-3.3-70b</div>
+    </div>
+
+    <!-- 編輯區 -->
+    <div class="editor-container">
+      <div class="editor-box">
+        <div class="editor-header">
+          <span class="editor-title">原文</span>
+          <span class="char-count" id="inputCharCount">0 字</span>
+        </div>
+        <textarea 
+          id="inputText" 
+          placeholder="輸入需要翻譯的文字..."
+          aria-label="原文輸入"
+        ></textarea>
+      </div>
+
+      <div class="editor-box">
+        <div class="editor-header">
+          <span class="editor-title">譯文</span>
+          <button class="copy-btn-small" id="copyBtn" disabled>複製</button>
+        </div>
+        <textarea 
+          id="outputText" 
+          placeholder="翻譯結果將顯示於此..."
+          readonly
+          aria-label="譯文顯示"
+        ></textarea>
       </div>
     </div>
 
+    <!-- 按鈕區 -->
     <div class="actions">
-      <button id="btnRun">⚡ 執行翻譯/潤飾</button>
-      <button id="btnCopy" disabled>📋 複製結果</button>
-      <button id="btnClear" style="background: #64748b; border-color: #64748b;">🗑️ 清空</button>
+      <button class="btn btn-primary" id="btnRun">
+        <span>⚡</span>
+        <span id="btnRunText">翻譯</span>
+      </button>
+      <button class="btn btn-secondary" id="btnClear">
+        <span>🗑️</span> 清除
+      </button>
     </div>
 
+    <!-- 狀態訊息 -->
     <div class="status" id="status" role="alert" aria-live="polite"></div>
 
+    <!-- Footer -->
     <div class="footer">
-      <strong>💡 使用說明：</strong><br>
-      此為純前端靜態頁面，API Key 僅儲存於瀏覽器 Session（關閉分頁自動清除）。<br>
-      ⚡ 使用 Groq 免費額度（每分鐘限流約 30 次）。<br>
-      ♿ 本頁面符合 WCAG 2.1 AA 無障礙標準，支援螢幕閱讀器與鍵盤導航。
+      使用 Groq API 免費服務｜每分鐘限流約 30 次請求<br>
+      API Key 僅儲存於瀏覽器 Session，關閉分頁自動清除
     </div>
   </div>
 
   <!-- API Key Modal -->
-  <div class="modal" id="apiModal" role="dialog" aria-labelledby="modalTitle" aria-modal="true">
+  <div class="modal" id="apiModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-content">
-      <h2 id="modalTitle">🔐 輸入 Groq API Key</h2>
-      <p>請至 <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a> 建立金鑰。</p>
-      <p style="font-size: 1rem; color: var(--text-secondary); margin-top: 0.5rem;">
-        <strong>金鑰格式：</strong>以 <code>gsk_</code> 開頭的字串
+      <h2 class="modal-title" id="modalTitle">🔐 輸入 Groq API Key</h2>
+      <p class="modal-text">
+        請至 <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a> 建立金鑰
       </p>
-      <input type="password" id="apiKeyInput" placeholder="gsk_xxxxxxxxxxxxxxxxxxxx" aria-label="Groq API Key">
+      <input 
+        type="password" 
+        id="apiKeyInput" 
+        placeholder="gsk_xxxxxxxxxxxxxxxxxxxx"
+        aria-label="Groq API Key"
+      >
       <div class="modal-buttons">
-        <button id="saveKey">✅ 儲存並關閉</button>
-        <button id="closeModal" class="secondary">❌ 取消</button>
+        <button class="btn-confirm" id="saveKey">儲存</button>
+        <button class="btn-cancel" id="closeModal">取消</button>
       </div>
     </div>
   </div>
 
   <script>
-    // --- 狀態與元素 ---
+    // 狀態管理
+    const state = {
+      mode: 'translate',
+      apiKey: sessionStorage.getItem('groq_api_key') || ''
+    };
+
+    // DOM 元素
     const els = {
+      tabs: document.querySelectorAll('.tab'),
       apiBanner: document.getElementById('apiBanner'),
+      apiBannerText: document.getElementById('apiBannerText'),
       modal: document.getElementById('apiModal'),
-      keyInput: document.getElementById('apiKeyInput'),
+      apiKeyInput: document.getElementById('apiKeyInput'),
       saveKey: document.getElementById('saveKey'),
       closeModal: document.getElementById('closeModal'),
-      source: document.getElementById('sourceLang'),
-      target: document.getElementById('targetLang'),
-      mode: document.getElementById('mode'),
-      tone: document.getElementById('tone'),
-      input: document.getElementById('inputText'),
-      output: document.getElementById('outputText'),
-      run: document.getElementById('btnRun'),
-      copy: document.getElementById('btnCopy'),
-      clear: document.getElementById('btnClear'),
+      sourceLang: document.getElementById('sourceLang'),
+      targetLang: document.getElementById('targetLang'),
+      swapBtn: document.getElementById('swapBtn'),
+      inputText: document.getElementById('inputText'),
+      outputText: document.getElementById('outputText'),
+      inputCharCount: document.getElementById('inputCharCount'),
+      btnRun: document.getElementById('btnRun'),
+      btnRunText: document.getElementById('btnRunText'),
+      btnClear: document.getElementById('btnClear'),
+      copyBtn: document.getElementById('copyBtn'),
       status: document.getElementById('status')
     };
 
-    let apiKey = sessionStorage.getItem('groq_api_key') || '';
-    if (apiKey) {
-      els.apiBanner.textContent = '✅ Groq API Key 已設定（點擊可更換）';
-      els.apiBanner.classList.add('set');
-    }
-    els.apiBanner.onclick = () => els.modal.classList.add('active');
+    // 初始化
+    function init() {
+      if (state.apiKey) {
+        els.apiBanner.classList.add('set');
+        els.apiBannerText.textContent = '✅ Groq API Key 已設定（點擊可更換）';
+      }
 
-    // --- Modal 控制 ---
-    els.closeModal.onclick = () => els.modal.classList.remove('active');
-    els.saveKey.onclick = () => {
-      const val = els.keyInput.value.trim();
-      if (!val.startsWith('gsk_')) {
-        alert('❌ Groq 金鑰格式應以 gsk_ 開頭\n\n請重新檢查您的 API Key');
+      updateModeUI();
+    }
+
+    // 標籤頁切換
+    els.tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        els.tabs.forEach(t => {
+          t.classList.remove('active');
+          t.setAttribute('aria-selected', 'false');
+        });
+        tab.classList.add('active');
+        tab.setAttribute('aria-selected', 'true');
+        
+        state.mode = tab.dataset.mode;
+        updateModeUI();
+      });
+    });
+
+    function updateModeUI() {
+      const modeTexts = {
+        translate: '翻譯',
+        polish: '專家寫作',
+        refine: '文稿潤飾'
+      };
+      els.btnRunText.textContent = modeTexts[state.mode];
+    }
+
+    // API Key Modal
+    els.apiBanner.addEventListener('click', openModal);
+    els.apiBanner.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') openModal();
+    });
+
+    function openModal() {
+      els.modal.classList.add('active');
+      els.apiKeyInput.focus();
+    }
+
+    function closeModal() {
+      els.modal.classList.remove('active');
+      els.apiKeyInput.value = '';
+    }
+
+    els.closeModal.addEventListener('click', closeModal);
+    
+    els.saveKey.addEventListener('click', () => {
+      const key = els.apiKeyInput.value.trim();
+      if (!key.startsWith('gsk_')) {
+        alert('❌ Groq 金鑰格式應以 gsk_ 開頭');
         return;
       }
-      apiKey = val;
-      sessionStorage.setItem('groq_api_key', val);
-      els.apiBanner.textContent = '✅ Groq API Key 已設定（點擊可更換）';
+      state.apiKey = key;
+      sessionStorage.setItem('groq_api_key', key);
       els.apiBanner.classList.add('set');
-      els.modal.classList.remove('active');
-      els.keyInput.value = '';
-    };
+      els.apiBannerText.textContent = '✅ Groq API Key 已設定（點擊可更換）';
+      closeModal();
+    });
 
-    // 按 ESC 關閉 modal
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && els.modal.classList.contains('active')) {
-        els.modal.classList.remove('active');
+        closeModal();
       }
     });
 
-    // --- 核心邏輯 ---
-    els.run.onclick = async () => {
-      if (!apiKey) {
-        alert('⚠️ 請先設定 Groq API Key\n\n點擊頁面上方的黃色提示框輸入金鑰');
-        els.modal.classList.add('active');
+    // 交換語言
+    els.swapBtn.addEventListener('click', () => {
+      const temp = els.sourceLang.value;
+      els.sourceLang.value = els.targetLang.value;
+      els.targetLang.value = temp;
+    });
+
+    // 字數統計
+    els.inputText.addEventListener('input', () => {
+      const count = els.inputText.value.length;
+      els.inputCharCount.textContent = `${count} 字`;
+    });
+
+    // 執行翻譯/寫作
+    els.btnRun.addEventListener('click', async () => {
+      if (!state.apiKey) {
+        alert('⚠️ 請先設定 Groq API Key');
+        openModal();
         return;
       }
-      
-      const text = els.input.value.trim();
+
+      const text = els.inputText.value.trim();
       if (!text) {
         alert('⚠️ 請輸入文字');
-        els.input.focus();
+        els.inputText.focus();
         return;
       }
 
-      els.run.disabled = true;
-      els.output.value = '';
-      els.status.className = 'status loading';
-      els.status.textContent = '⏳ 正在處理中，請稍候...';
-      els.status.setAttribute('aria-busy', 'true');
+      els.btnRun.disabled = true;
+      els.outputText.value = '';
+      els.copyBtn.disabled = true;
+      
+      showStatus('loading', '⏳ 正在處理中...');
 
-      const isTranslate = els.mode.value === 'translate';
-      const tone = els.tone.value;
-      const src = els.source.value === 'auto' ? 'auto-detected' : els.source.value;
-      const tgt = els.target.value;
+      const src = els.sourceLang.value === 'auto' ? 'auto-detected' : els.sourceLang.value;
+      const tgt = els.targetLang.value;
 
-      const systemPrompt = isTranslate
-        ? `You are a professional translator. Translate the user's text from ${src} to ${tgt}. Preserve original meaning, tone, and formatting. Output ONLY the translated text.`
-        : `You are an expert writing editor. Refine and polish the following ${tgt} text for clarity, flow, and professionalism. Apply tone: ${tone}. Maintain original intent. Output ONLY the revised text.`;
+      let systemPrompt;
+      if (state.mode === 'translate') {
+        systemPrompt = `You are a professional translator. Translate the user's text from ${src} to ${tgt}. Preserve original meaning, tone, and formatting. Output ONLY the translated text.`;
+      } else if (state.mode === 'polish') {
+        systemPrompt = `You are an expert writer. Create professional, engaging content in ${tgt}. Ensure clarity, proper grammar, and natural flow. Output ONLY the refined text.`;
+      } else {
+        systemPrompt = `You are an expert editor. Refine and polish the following ${tgt} text for clarity, grammar, and professionalism. Maintain original intent. Output ONLY the revised text.`;
+      }
 
       try {
         const proxy = "https://corsproxy.io/?";
@@ -521,7 +761,7 @@
         const res = await fetch(proxy + encodeURIComponent(apiUrl), {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${apiKey}`,
+            'Authorization': `Bearer ${state.apiKey}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
@@ -530,7 +770,7 @@
               { role: 'system', content: systemPrompt },
               { role: 'user', content: text }
             ],
-            temperature: isTranslate ? 0.2 : 0.4,
+            temperature: state.mode === 'translate' ? 0.2 : 0.5,
             max_tokens: 4096,
             top_p: 0.9
           })
@@ -543,45 +783,57 @@
 
         const data = await res.json();
         const result = data.choices[0].message.content.trim();
-        els.output.value = result;
-        els.copy.disabled = false;
-        els.status.className = 'status success';
-        els.status.textContent = '✅ 完成！結果已顯示在右側';
-        els.status.setAttribute('aria-busy', 'false');
-      } catch (e) {
-        console.error(e);
-        els.status.className = 'status error';
-        els.status.textContent = `❌ 錯誤: ${e.message}`;
-        els.status.setAttribute('aria-busy', 'false');
+        
+        els.outputText.value = result;
+        els.copyBtn.disabled = false;
+        showStatus('success', '✅ 完成！');
+      } catch (error) {
+        console.error(error);
+        showStatus('error', `❌ 錯誤: ${error.message}`);
       } finally {
-        els.run.disabled = false;
-      }
-    };
-
-    els.copy.onclick = () => {
-      navigator.clipboard.writeText(els.output.value);
-      els.status.className = 'status success';
-      els.status.textContent = '📋 已複製到剪貼簿！';
-      setTimeout(() => {
-        els.status.textContent = '✅ 完成！結果已顯示在右側';
-      }, 2000);
-    };
-
-    els.clear.onclick = () => {
-      els.input.value = '';
-      els.output.value = '';
-      els.status.textContent = '';
-      els.status.className = 'status';
-      els.copy.disabled = true;
-      els.input.focus();
-    };
-
-    // 快捷鍵：Ctrl/Cmd + Enter 執行
-    document.addEventListener('keydown', (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        els.run.click();
+        els.btnRun.disabled = false;
       }
     });
+
+    // 複製按鈕
+    els.copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(els.outputText.value);
+      const originalText = els.copyBtn.textContent;
+      els.copyBtn.textContent = '✓ 已複製';
+      setTimeout(() => {
+        els.copyBtn.textContent = originalText;
+      }, 2000);
+    });
+
+    // 清除按鈕
+    els.btnClear.addEventListener('click', () => {
+      els.inputText.value = '';
+      els.outputText.value = '';
+      els.inputCharCount.textContent = '0 字';
+      els.copyBtn.disabled = true;
+      hideStatus();
+      els.inputText.focus();
+    });
+
+    // 狀態顯示
+    function showStatus(type, message) {
+      els.status.className = `status show ${type}`;
+      els.status.textContent = message;
+    }
+
+    function hideStatus() {
+      els.status.classList.remove('show');
+    }
+
+    // 快捷鍵
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        els.btnRun.click();
+      }
+    });
+
+    // 啟動
+    init();
   </script>
 </body>
 </html>
