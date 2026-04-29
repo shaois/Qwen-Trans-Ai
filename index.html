@@ -5,10 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI 翻譯與寫作專家 | NVIDIA NIM</title>
   <style>
-    :root {
-      --bg: #0f172a; --card: #1e293b; --text: #e2e8f0; --accent: #3b82f6;
-      --border: #334155; --success: #22c55e; --error: #ef4444; --input-bg: #0b1120;
-    }
+    :root { --bg: #0f172a; --card: #1e293b; --text: #e2e8f0; --accent: #3b82f6; --border: #334155; --success: #22c55e; --error: #ef4444; --input-bg: #0b1120; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
     body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 2rem 1rem; }
     .container { width: 100%; max-width: 900px; }
@@ -156,7 +153,7 @@
       els.run.disabled = true;
       els.output.value = '';
       els.status.className = 'status loading';
-      els.status.textContent = '⏳ 正在呼叫 NVIDIA NIM 模型...';
+      els.status.textContent = ' 正在呼叫 NVIDIA NIM 模型...';
 
       const isTranslate = els.mode.value === 'translate';
       const tone = els.tone.value;
@@ -168,7 +165,11 @@
         : `You are an expert writing editor. Refine and polish the following ${tgt} text for clarity, flow, and professionalism. Apply tone: ${tone}. Maintain original intent. Output ONLY the revised text.`;
 
       try {
-        const res = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+        // ✅ 使用 corsproxy.io 繞過 CORS 限制
+        const proxy = "https://corsproxy.io/?"; 
+        const apiUrl = "https://integrate.api.nvidia.com/v1/chat/completions";
+        
+        const res = await fetch(proxy + encodeURIComponent(apiUrl), {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${apiKey}`,
