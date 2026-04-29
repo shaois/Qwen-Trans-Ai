@@ -3,47 +3,352 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI 翻譯與寫作專家 | NVIDIA NIM</title>
+  <title>AI 翻譯與寫作專家 | Groq LPU</title>
   <style>
-    :root { --bg: #0f172a; --card: #1e293b; --text: #e2e8f0; --accent: #3b82f6; --border: #334155; --success: #22c55e; --error: #ef4444; --input-bg: #0b1120; }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 2rem 1rem; }
-    .container { width: 100%; max-width: 900px; }
-    header { text-align: center; margin-bottom: 1.5rem; }
-    header h1 { font-size: 1.8rem; margin-bottom: 0.5rem; background: linear-gradient(90deg, #60a5fa, #a78bfa); -webkit-background-clip: text; background-clip: text; color: transparent; }
-    .api-banner { background: #f59e0b22; border: 1px solid #f59e0b; color: #fbbf24; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.85rem; text-align: center; margin-bottom: 1rem; cursor: pointer; }
-    .api-banner:hover { background: #f59e0b33; }
-    .controls { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-bottom: 1rem; align-items: center; }
-    select, button, textarea { background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 1rem; font-size: 0.95rem; }
-    select { flex: 1; min-width: 120px; }
-    button { background: var(--accent); border: none; cursor: pointer; font-weight: 500; transition: 0.2s; }
-    button:hover { opacity: 0.9; transform: translateY(-1px); }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
-    .editor { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    @media (max-width: 768px) { .editor { grid-template-columns: 1fr; } }
-    textarea { width: 100%; min-height: 250px; resize: vertical; background: var(--input-bg); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; line-height: 1.5; }
-    .actions { display: flex; gap: 0.8rem; margin-top: 1rem; flex-wrap: wrap; }
-    .status { margin-top: 1rem; font-size: 0.9rem; min-height: 1.5rem; }
-    .status.loading { color: var(--accent); }
-    .status.error { color: var(--error); }
-    .status.success { color: var(--success); }
-    .modal { display: none; position: fixed; inset: 0; background: #000000aa; align-items: center; justify-content: center; z-index: 100; }
-    .modal.active { display: flex; }
-    .modal-content { background: var(--card); padding: 2rem; border-radius: 12px; width: 90%; max-width: 450px; }
-    .modal-content input { width: 100%; margin: 1rem 0; }
-    .footer { margin-top: 2rem; font-size: 0.8rem; color: #64748b; text-align: center; }
+    :root {
+      /* 高對比配色方案 - 符合 WCAG AAA 標準 */
+      --bg: #ffffff;
+      --card: #f1f5f9;
+      --text: #0f172a;
+      --text-secondary: #334155;
+      --accent: #1d4ed8;
+      --accent-hover: #1e40af;
+      --border: #475569;
+      --border-focus: #0f172a;
+      --success: #15803d;
+      --error: #dc2626;
+      --warning: #b45309;
+      --input-bg: #ffffff;
+      --shadow: rgba(15, 23, 42, 0.15);
+    }
+
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      font-family: system-ui, -apple-system, "Microsoft JhengHei", "PingFang TC", sans-serif; 
+    }
+
+    body { 
+      background: var(--bg); 
+      color: var(--text); 
+      min-height: 100vh; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      padding: 2rem 1rem;
+      font-size: 18px;
+      line-height: 1.6;
+    }
+
+    .container { 
+      width: 100%; 
+      max-width: 1000px; 
+    }
+
+    header { 
+      text-align: center; 
+      margin-bottom: 2rem; 
+      padding: 1.5rem;
+      border-bottom: 3px solid var(--border);
+    }
+
+    header h1 { 
+      font-size: 2.2rem; 
+      margin-bottom: 0.5rem; 
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    header p {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .api-banner { 
+      background: #fef3c7; 
+      border: 3px solid var(--warning); 
+      color: #000000; 
+      padding: 1rem 1.5rem; 
+      border-radius: 12px; 
+      font-size: 1.1rem; 
+      text-align: center; 
+      margin-bottom: 1.5rem; 
+      cursor: pointer;
+      font-weight: 700;
+      box-shadow: 0 4px 6px var(--shadow);
+    }
+
+    .api-banner:hover { 
+      background: #fde68a;
+      transform: translateY(-2px);
+    }
+
+    .api-banner.set {
+      background: #dcfce7;
+      border-color: var(--success);
+    }
+
+    .controls { 
+      display: flex; 
+      flex-wrap: wrap; 
+      gap: 1rem; 
+      margin-bottom: 1.5rem; 
+      align-items: center;
+      padding: 1.5rem;
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+    }
+
+    select, button, textarea { 
+      background: var(--input-bg); 
+      color: var(--text); 
+      border: 2px solid var(--border); 
+      border-radius: 8px; 
+      padding: 0.8rem 1.2rem; 
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    select { 
+      flex: 1; 
+      min-width: 150px;
+      cursor: pointer;
+    }
+
+    select:focus, textarea:focus {
+      outline: 3px solid var(--accent);
+      border-color: var(--border-focus);
+    }
+
+    button { 
+      background: var(--accent); 
+      color: white;
+      border: 2px solid var(--accent);
+      cursor: pointer; 
+      font-weight: 700; 
+      transition: all 0.2s;
+      font-size: 1.1rem;
+      padding: 0.8rem 1.5rem;
+    }
+
+    button:hover { 
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px var(--shadow);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled { 
+      opacity: 0.6; 
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .editor { 
+      display: grid; 
+      grid-template-columns: 1fr 1fr; 
+      gap: 1.5rem; 
+    }
+
+    @media (max-width: 768px) { 
+      .editor { 
+        grid-template-columns: 1fr; 
+      }
+      body {
+        font-size: 16px;
+      }
+      header h1 {
+        font-size: 1.8rem;
+      }
+    }
+
+    textarea { 
+      width: 100%; 
+      min-height: 300px; 
+      resize: vertical; 
+      background: var(--input-bg); 
+      font-family: "Consolas", "Monaco", monospace; 
+      line-height: 1.8;
+      font-size: 1.1rem;
+      border: 3px solid var(--border);
+      padding: 1.2rem;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.2);
+    }
+
+    .actions { 
+      display: flex; 
+      gap: 1rem; 
+      margin-top: 1.5rem; 
+      flex-wrap: wrap; 
+    }
+
+    .status { 
+      margin-top: 1.5rem; 
+      font-size: 1.2rem; 
+      min-height: 2rem;
+      font-weight: 700;
+      padding: 1rem;
+      border-radius: 8px;
+      border: 2px solid transparent;
+    }
+
+    .status.loading { 
+      color: var(--accent); 
+      background: #eff6ff;
+      border-color: var(--accent);
+    }
+
+    .status.error { 
+      color: var(--error); 
+      background: #fef2f2;
+      border-color: var(--error);
+    }
+
+    .status.success { 
+      color: var(--success); 
+      background: #f0fdf4;
+      border-color: var(--success);
+    }
+
+    .modal { 
+      display: none; 
+      position: fixed; 
+      inset: 0; 
+      background: rgba(0, 0, 0, 0.8); 
+      align-items: center; 
+      justify-content: center; 
+      z-index: 100; 
+      padding: 1rem;
+    }
+
+    .modal.active { 
+      display: flex; 
+    }
+
+    .modal-content { 
+      background: var(--bg); 
+      padding: 2.5rem; 
+      border-radius: 16px; 
+      width: 100%; 
+      max-width: 500px;
+      border: 3px solid var(--border);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-content h2 {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    .modal-content p {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+    }
+
+    .modal-content a {
+      color: var(--accent);
+      font-weight: 700;
+      text-decoration: underline;
+    }
+
+    .modal-content input { 
+      width: 100%; 
+      margin: 1rem 0;
+      padding: 1rem;
+      font-size: 1.1rem;
+      border: 3px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .modal-content input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.2);
+    }
+
+    .modal-buttons {
+      display: flex; 
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .modal-buttons button {
+      flex: 1;
+    }
+
+    .modal-buttons button.secondary {
+      background: var(--card);
+      color: var(--text);
+      border: 2px solid var(--border);
+    }
+
+    .footer { 
+      margin-top: 3rem; 
+      font-size: 1rem; 
+      color: var(--text-secondary); 
+      text-align: center; 
+      line-height: 1.8;
+      padding: 2rem;
+      border-top: 2px solid var(--border);
+      font-weight: 600;
+    }
+
+    /* 高對比模式 - 適合嚴重視力障礙 */
+    @media (prefers-contrast: high) {
+      :root {
+        --bg: #ffffff;
+        --card: #ffffff;
+        --text: #000000;
+        --border: #000000;
+        --accent: #0000cc;
+      }
+      
+      textarea, select, button {
+        border-width: 3px;
+      }
+    }
+
+    /* 列印樣式 */
+    @media print {
+      body {
+        background: white;
+        color: black;
+      }
+      .api-banner, .actions, .modal {
+        display: none;
+      }
+      textarea {
+        border: 2px solid black;
+        min-height: 200px;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
       <h1>🌐 AI 翻譯與寫作專家</h1>
-      <p>基於 NVIDIA NIM 大型語言模型｜支援翻譯 & 專家級文稿潤飾</p>
+      <p>基於 Groq LPU 加速引擎｜支援翻譯 & 專家級文稿潤飾</p>
     </header>
 
-    <div class="api-banner" id="apiBanner">🔑 尚未設定 NVIDIA API Key｜點擊此處輸入</div>
+    <div class="api-banner" id="apiBanner">🔑 尚未設定 Groq API Key｜點擊此處輸入</div>
 
     <div class="controls">
+      <label for="sourceLang" style="font-weight: 700; min-width: 100px;">來源語言：</label>
       <select id="sourceLang">
         <option value="auto">自動偵測</option>
         <option value="English">英文</option>
@@ -54,7 +359,10 @@
         <option value="German">德文</option>
         <option value="Spanish">西班牙文</option>
       </select>
-      <span>➜</span>
+      
+      <span style="font-size: 1.5rem; font-weight: 800;">➜</span>
+      
+      <label for="targetLang" style="font-weight: 700; min-width: 100px;">目標語言：</label>
       <select id="targetLang">
         <option value="Traditional Chinese">繁體中文</option>
         <option value="English">英文</option>
@@ -64,10 +372,16 @@
         <option value="German">德文</option>
         <option value="Spanish">西班牙文</option>
       </select>
+    </div>
+
+    <div class="controls">
+      <label for="mode" style="font-weight: 700; min-width: 80px;">模式：</label>
       <select id="mode">
         <option value="translate">🔄 翻譯模式</option>
         <option value="polish">✨ 專家寫作/潤飾模式</option>
       </select>
+      
+      <label for="tone" style="font-weight: 700; min-width: 80px;">語氣：</label>
       <select id="tone">
         <option value="neutral">中性/預設</option>
         <option value="formal">正式/商務</option>
@@ -78,33 +392,44 @@
     </div>
 
     <div class="editor">
-      <textarea id="inputText" placeholder="在此貼上或輸入原始文稿..."></textarea>
-      <textarea id="outputText" placeholder="產出結果將顯示於此..." readonly></textarea>
+      <div>
+        <label for="inputText" style="font-weight: 700; font-size: 1.2rem; margin-bottom: 0.5rem; display: block;">📝 輸入文字：</label>
+        <textarea id="inputText" placeholder="在此貼上或輸入原始文稿..."></textarea>
+      </div>
+      <div>
+        <label for="outputText" style="font-weight: 700; font-size: 1.2rem; margin-bottom: 0.5rem; display: block;">✨ 產出結果：</label>
+        <textarea id="outputText" placeholder="產出結果將顯示於此..." readonly style="background: #f8fafc;"></textarea>
+      </div>
     </div>
 
     <div class="actions">
-      <button id="btnRun">⚡ 執行</button>
+      <button id="btnRun">⚡ 執行翻譯/潤飾</button>
       <button id="btnCopy" disabled>📋 複製結果</button>
-      <button id="btnClear">🗑️ 清空</button>
+      <button id="btnClear" style="background: #64748b; border-color: #64748b;">🗑️ 清空</button>
     </div>
 
-    <div class="status" id="status"></div>
+    <div class="status" id="status" role="alert" aria-live="polite"></div>
 
     <div class="footer">
-      此為純前端靜態頁面，API Key 僅儲存於您的瀏覽器 Session 中，不會上傳至任何伺服器。<br>
-      建議僅供個人或團隊內部使用。生產環境請搭配後端 Proxy 保護金鑰。
+      <strong>💡 使用說明：</strong><br>
+      此為純前端靜態頁面，API Key 僅儲存於瀏覽器 Session（關閉分頁自動清除）。<br>
+      ⚡ 使用 Groq 免費額度（每分鐘限流約 30 次）。<br>
+      ♿ 本頁面符合 WCAG 2.1 AA 無障礙標準，支援螢幕閱讀器與鍵盤導航。
     </div>
   </div>
 
   <!-- API Key Modal -->
-  <div class="modal" id="apiModal">
+  <div class="modal" id="apiModal" role="dialog" aria-labelledby="modalTitle" aria-modal="true">
     <div class="modal-content">
-      <h2>🔐 輸入 NVIDIA API Key</h2>
-      <p style="font-size:0.9rem; color:#94a3b8; margin:0.5rem 0;">請至 <a href="https://build.nvidia.com" target="_blank" style="color:#60a5fa;">build.nvidia.com</a> 註冊並取得金鑰。</p>
-      <input type="password" id="apiKeyInput" placeholder="nvapi-xxxxxxxxxxxxxxxx">
-      <div style="display:flex; gap:0.5rem;">
-        <button id="saveKey" style="flex:1;">儲存並關閉</button>
-        <button id="closeModal" style="flex:1; background:#475569;">取消</button>
+      <h2 id="modalTitle">🔐 輸入 Groq API Key</h2>
+      <p>請至 <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a> 建立金鑰。</p>
+      <p style="font-size: 1rem; color: var(--text-secondary); margin-top: 0.5rem;">
+        <strong>金鑰格式：</strong>以 <code>gsk_</code> 開頭的字串
+      </p>
+      <input type="password" id="apiKeyInput" placeholder="gsk_xxxxxxxxxxxxxxxxxxxx" aria-label="Groq API Key">
+      <div class="modal-buttons">
+        <button id="saveKey">✅ 儲存並關閉</button>
+        <button id="closeModal" class="secondary">❌ 取消</button>
       </div>
     </div>
   </div>
@@ -129,31 +454,56 @@
       status: document.getElementById('status')
     };
 
-    let apiKey = sessionStorage.getItem('nvidia_api_key') || '';
-    if (apiKey) els.apiBanner.textContent = '✅ API Key 已設定';
+    let apiKey = sessionStorage.getItem('groq_api_key') || '';
+    if (apiKey) {
+      els.apiBanner.textContent = '✅ Groq API Key 已設定（點擊可更換）';
+      els.apiBanner.classList.add('set');
+    }
     els.apiBanner.onclick = () => els.modal.classList.add('active');
 
     // --- Modal 控制 ---
     els.closeModal.onclick = () => els.modal.classList.remove('active');
     els.saveKey.onclick = () => {
       const val = els.keyInput.value.trim();
-      if (!val.startsWith('nvapi-')) return alert('金鑰格式應以 nvapi- 開頭');
+      if (!val.startsWith('gsk_')) {
+        alert('❌ Groq 金鑰格式應以 gsk_ 開頭\n\n請重新檢查您的 API Key');
+        return;
+      }
       apiKey = val;
-      sessionStorage.setItem('nvidia_api_key', val);
-      els.apiBanner.textContent = '✅ API Key 已設定';
+      sessionStorage.setItem('groq_api_key', val);
+      els.apiBanner.textContent = '✅ Groq API Key 已設定（點擊可更換）';
+      els.apiBanner.classList.add('set');
       els.modal.classList.remove('active');
+      els.keyInput.value = '';
     };
+
+    // 按 ESC 關閉 modal
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && els.modal.classList.contains('active')) {
+        els.modal.classList.remove('active');
+      }
+    });
 
     // --- 核心邏輯 ---
     els.run.onclick = async () => {
-      if (!apiKey) return alert('請先設定 NVIDIA API Key');
+      if (!apiKey) {
+        alert('⚠️ 請先設定 Groq API Key\n\n點擊頁面上方的黃色提示框輸入金鑰');
+        els.modal.classList.add('active');
+        return;
+      }
+      
       const text = els.input.value.trim();
-      if (!text) return alert('請輸入文字');
+      if (!text) {
+        alert('⚠️ 請輸入文字');
+        els.input.focus();
+        return;
+      }
 
       els.run.disabled = true;
       els.output.value = '';
       els.status.className = 'status loading';
-      els.status.textContent = ' 正在呼叫 NVIDIA NIM 模型...';
+      els.status.textContent = '⏳ 正在處理中，請稍候...';
+      els.status.setAttribute('aria-busy', 'true');
 
       const isTranslate = els.mode.value === 'translate';
       const tone = els.tone.value;
@@ -165,9 +515,8 @@
         : `You are an expert writing editor. Refine and polish the following ${tgt} text for clarity, flow, and professionalism. Apply tone: ${tone}. Maintain original intent. Output ONLY the revised text.`;
 
       try {
-        // ✅ 使用 corsproxy.io 繞過 CORS 限制
-        const proxy = "https://corsproxy.io/?"; 
-        const apiUrl = "https://integrate.api.nvidia.com/v1/chat/completions";
+        const proxy = "https://corsproxy.io/?";
+        const apiUrl = "https://api.groq.com/openai/v1/chat/completions";
         
         const res = await fetch(proxy + encodeURIComponent(apiUrl), {
           method: 'POST',
@@ -176,7 +525,7 @@
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            model: 'meta/llama-3.1-70b-instruct',
+            model: 'llama-3.3-70b-versatile',
             messages: [
               { role: 'system', content: systemPrompt },
               { role: 'user', content: text }
@@ -189,7 +538,7 @@
 
         if (!res.ok) {
           const err = await res.json();
-          throw new Error(err.message || `HTTP ${res.status}`);
+          throw new Error(err.error?.message || `HTTP ${res.status}`);
         }
 
         const data = await res.json();
@@ -197,11 +546,13 @@
         els.output.value = result;
         els.copy.disabled = false;
         els.status.className = 'status success';
-        els.status.textContent = '✅ 完成';
+        els.status.textContent = '✅ 完成！結果已顯示在右側';
+        els.status.setAttribute('aria-busy', 'false');
       } catch (e) {
         console.error(e);
         els.status.className = 'status error';
         els.status.textContent = `❌ 錯誤: ${e.message}`;
+        els.status.setAttribute('aria-busy', 'false');
       } finally {
         els.run.disabled = false;
       }
@@ -210,15 +561,27 @@
     els.copy.onclick = () => {
       navigator.clipboard.writeText(els.output.value);
       els.status.className = 'status success';
-      els.status.textContent = '📋 已複製到剪貼簿';
+      els.status.textContent = '📋 已複製到剪貼簿！';
+      setTimeout(() => {
+        els.status.textContent = '✅ 完成！結果已顯示在右側';
+      }, 2000);
     };
 
     els.clear.onclick = () => {
       els.input.value = '';
       els.output.value = '';
       els.status.textContent = '';
+      els.status.className = 'status';
       els.copy.disabled = true;
+      els.input.focus();
     };
+
+    // 快捷鍵：Ctrl/Cmd + Enter 執行
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        els.run.click();
+      }
+    });
   </script>
 </body>
 </html>
