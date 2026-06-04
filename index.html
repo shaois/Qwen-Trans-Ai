@@ -3,9 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- 修正 Meta Description 以降低被判定為釣魚網站的機率 -->
-  <meta name="description" content="AI 翻譯與寫作專家工具，基於 Groq LPU 模型，純前端靜態頁面">
-  <title>AI 翻譯與寫作專家 | Groq</title>
+  <title>AI 翻譯與寫作專家 | Groq LPU</title>
   <style>
     :root {
       --primary: #2563eb;
@@ -55,21 +53,15 @@
     /* Editor Layout with Swap Button */
     .editor-wrapper {
       display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      gap: 1rem;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
       margin-bottom: 1.5rem;
-      align-items: center; /* Center the swap button vertically */
     }
 
     @media (max-width: 768px) {
       .editor-wrapper {
         grid-template-columns: 1fr;
-        gap: 0;
-      }
-      .swap-container {
-        transform: rotate(90deg);
-        margin: -0.5rem 0;
-        z-index: 10;
+        gap: 1rem;
       }
     }
 
@@ -80,10 +72,9 @@
       overflow: hidden;
       box-shadow: var(--shadow);
       transition: all 0.2s;
-      height: 100%;
-      min-height: 350px;
       display: flex;
       flex-direction: column;
+      min-height: 350px; /* 確保兩框最小高度一致 */
     }
 
     .editor-box:focus-within { border-color: var(--border-focus); box-shadow: 0 0 0 4px var(--primary-light); }
@@ -105,6 +96,8 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      margin: -2.5rem auto; /* 定位到兩框中間 */
+      z-index: 5;
     }
 
     .swap-btn {
@@ -121,7 +114,6 @@
       color: var(--text-secondary);
       transition: all 0.3s ease;
       box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-      z-index: 5;
     }
 
     .swap-btn:hover {
@@ -159,13 +151,12 @@
     .modal input { width: 100%; padding: 1rem; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem; margin-bottom: 1.5rem; }
     .modal input:focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--primary-light); }
 
-    /* Fake Password Styling */
     .fake-password {
       font-family: monospace;
       letter-spacing: 2px;
-      -webkit-text-security: disc; /* Webkit browsers (Chrome/Safari) */
-      -moz-text-security: disc;    /* Firefox */
-      text-security: disc;         /* Standard */
+      -webkit-text-security: disc;
+      -moz-text-security: disc;
+      text-security: disc;
     }
 
     .modal-buttons { display: flex; gap: 1rem; }
@@ -182,7 +173,7 @@
 <body>
   <div class="container">
     <div class="tabs" role="tablist">
-      <button class="tab active" role="tab" aria-selected="true" data-mode="translate"><span></span> 翻譯</button>
+      <button class="tab active" role="tab" aria-selected="true" data-mode="translate"><span>🌐</span> 翻譯</button>
       <button class="tab" role="tab" aria-selected="false" data-mode="polish"><span>✍️</span> 專家寫作</button>
       <button class="tab" role="tab" aria-selected="false" data-mode="refine"><span>✨</span> 文稿潤飾</button>
     </div>
@@ -259,11 +250,11 @@
 
   <div class="modal" id="apiModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-content">
-      <h2 class="modal-title" id="modalTitle">🔐 輸入 Groq API Key</h2>
+      <h2 class="modal-title" id="modalTitle"> 輸入 Groq API Key</h2>
       <p class="modal-text">
         請至 <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a> 建立金鑰
       </p>
-      <!-- ✅ 修改重點：type="text" 但配合 CSS 隱藏文字，解決 Google 安全警告 -->
+      <!-- 使用 fake-password 類別模擬密碼框視覺效果 -->
       <input type="text" id="apiKeyInput" class="fake-password" placeholder="gsk_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" aria-label="Groq API Key">
       <div class="modal-buttons">
         <button class="btn-confirm" id="saveKey">儲存</button>
@@ -343,9 +334,9 @@
 
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && els.modal.classList.contains('active')) els.modal.classList.remove('active'); });
 
-    // ✅ 新增：互換功能 (文字與語言)
+    // 互換功能：交換原文/譯文文字 + 語言選項
     els.swapBtn.addEventListener('click', () => {
-      // 1. 交換文字
+      // 1. 交換文字內容
       const tempText = els.inputText.value;
       els.inputText.value = els.outputText.value;
       els.outputText.value = tempText;
@@ -353,7 +344,7 @@
       // 更新字數統計
       els.inputCharCount.textContent = `${els.inputText.value.length} 字`;
 
-      // 2. 交換語言選項 (如果來源不是自動偵測)
+      // 2. 交換語言選項（僅當來源語言不是自動偵測時生效）
       if (els.sourceLang.value !== 'auto') {
         const tempLang = els.sourceLang.value;
         els.sourceLang.value = els.targetLang.value;
@@ -364,9 +355,9 @@
     els.inputText.addEventListener('input', () => { els.inputCharCount.textContent = `${els.inputText.value.length} 字`; });
 
     els.btnRun.addEventListener('click', async () => {
-      if (!state.apiKey) { alert('⚠️ 請先設定 Groq API Key'); openModal(); return; }
+      if (!state.apiKey) { alert('️ 請先設定 Groq API Key'); openModal(); return; }
       const text = els.inputText.value.trim();
-      if (!text) { alert('️ 請輸入文字'); els.inputText.focus(); return; }
+      if (!text) { alert('⚠️ 請輸入文字'); els.inputText.focus(); return; }
 
       els.btnRun.disabled = true;
       els.outputText.value = '';
@@ -386,8 +377,8 @@
       }
 
       try {
-        // 使用較穩定的代理伺服器
-        const proxy = "https://api.allorigins.win/raw?url=";
+        // ✅ 修正：使用穩定的 CORS 代理伺服器
+        const proxy = "https://corsproxy.io/?";
         const apiUrl = "https://api.groq.com/openai/v1/chat/completions";
         
         const res = await fetch(proxy + encodeURIComponent(apiUrl), {
@@ -401,7 +392,10 @@
           })
         });
 
-        if (!res.ok) { const err = await res.json(); throw new Error(err.error?.message || `HTTP ${res.status}`); }
+        if (!res.ok) { 
+          const err = await res.json(); 
+          throw new Error(err.error?.message || `HTTP ${res.status}`); 
+        }
         const data = await res.json();
         els.outputText.value = data.choices[0].message.content.trim();
         els.copyBtn.disabled = false;
@@ -422,12 +416,18 @@
     });
 
     els.btnClear.addEventListener('click', () => {
-      els.inputText.value = ''; els.outputText.value = '';
-      els.inputCharCount.textContent = '0 字'; els.copyBtn.disabled = true; hideStatus();
+      els.inputText.value = ''; 
+      els.outputText.value = '';
+      els.inputCharCount.textContent = '0 字'; 
+      els.copyBtn.disabled = true; 
+      hideStatus();
       els.inputText.focus();
     });
 
-    function showStatus(type, message) { els.status.className = `status show ${type}`; els.status.textContent = message; }
+    function showStatus(type, message) { 
+      els.status.className = `status show ${type}`; 
+      els.status.textContent = message; 
+    }
     function hideStatus() { els.status.classList.remove('show'); }
 
     init();
