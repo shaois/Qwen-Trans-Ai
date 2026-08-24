@@ -376,6 +376,8 @@
         systemPrompt = `You are an expert editor. Refine and polish the following ${tgt} text for clarity, grammar, and professionalism. Maintain original intent. Output ONLY the revised text.`;
       }
 
+      systemPrompt += ' Do not include reasoning, analysis, explanations, or <think> tags. Return only the final answer.';
+
       try {
         // Groq API 已支援瀏覽器 CORS，可直接呼叫，避免第三方代理拒絕請求或接觸 API Key
         const apiUrl = "https://api.groq.com/openai/v1/chat/completions";
@@ -386,6 +388,7 @@
           body: JSON.stringify({
             model: 'qwen/qwen3.6-27b',
             messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: text }],
+            reasoning_effort: 'none',
             temperature: state.mode === 'translate' ? 0.2 : 0.5,
             max_tokens: 4096
           })
@@ -396,7 +399,9 @@
           throw new Error(err?.error?.message || `HTTP ${res.status}`);
         }
         const data = await res.json();
-        els.outputText.value = data.choices[0].message.content.trim();
+        const rawOutput = data.choices[0].message.content || '';
+        const cleanOutput = rawOutput.replace(/<think>[\s\S]*?<\/think>\s*/gi, '').trim();
+        els.outputText.value = cleanOutput || rawOutput.trim();
         els.copyBtn.disabled = false;
         showStatus('success', '✅ 完成！');
       } catch (error) {
