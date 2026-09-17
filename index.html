@@ -1,440 +1,300 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI 翻譯與寫作專家 | Groq LPU</title>
-  <style>
-    :root {
-      --primary: #2563eb;
-      --primary-hover: #1d4ed8;
-      --primary-light: #dbeafe;
-      --bg: #fafafa;
-      --surface: #ffffff;
-      --surface-alt: #f5f5f5;
-      --text: #1f2937;
-      --text-secondary: #4b5563;
-      --text-light: #6b7280;
-      --border: #d1d5db;
-      --border-focus: #2563eb;
-      --success: #059669;
-      --error: #dc2626;
-      --warning: #d97706;
-      --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", "PingFang TC", sans-serif; }
-
-    body { background: var(--bg); color: var(--text); min-height: 100vh; padding: 2rem 1rem; line-height: 1.6; }
-    .container { max-width: 1200px; margin: 0 auto; }
-
-    /* Tabs */
-    .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; background: var(--surface); padding: 0.5rem; border-radius: 12px; box-shadow: var(--shadow); width: fit-content; }
-    .tab { padding: 0.75rem 1.5rem; border: none; background: transparent; color: var(--text-secondary); font-size: 1rem; font-weight: 600; cursor: pointer; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 0.5rem; }
-    .tab:hover { background: var(--surface-alt); color: var(--text); }
-    .tab.active { background: var(--primary); color: white; }
-    .tab:focus { outline: 3px solid var(--primary-light); outline-offset: 2px; }
-
-    /* API Banner */
-    .api-banner { background: #fef3c7; border: 2px solid var(--warning); color: #000; padding: 1rem 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.2s; }
-    .api-banner:hover { background: #fde68a; transform: translateY(-1px); }
-    .api-banner.set { background: #d1fae5; border-color: var(--success); }
-
-    /* Controls */
-    .controls { display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: center; flex-wrap: wrap; }
-    .select-wrapper { position: relative; flex: 1; min-width: 150px; max-width: 250px; }
-    select { width: 100%; padding: 0.75rem 2.5rem 0.75rem 1rem; border: 2px solid var(--border); border-radius: 8px; background: var(--surface); font-size: 1rem; color: var(--text); cursor: pointer; appearance: none; font-weight: 500; }
-    .select-wrapper::after { content: "▼"; position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary); pointer-events: none; font-size: 0.75rem; }
-    select:focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--primary-light); }
-    
-    .model-badge { margin-left: auto; padding: 0.5rem 1rem; background: var(--surface-alt); border: 1px solid var(--border); border-radius: 6px; font-size: 0.875rem; color: var(--text-light); font-family: monospace; }
-
-    /* Editor Layout with Swap Button */
-    .editor-wrapper {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-      margin-bottom: 1.5rem;
-    }
-
-    @media (max-width: 768px) {
-      .editor-wrapper {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-      }
-    }
-
-    .editor-box {
-      background: var(--surface);
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: var(--shadow);
-      transition: all 0.2s;
-      display: flex;
-      flex-direction: column;
-      min-height: 350px; /* 確保兩框最小高度一致 */
-    }
-
-    .editor-box:focus-within { border-color: var(--border-focus); box-shadow: 0 0 0 4px var(--primary-light); }
-
-    .editor-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; background: var(--surface-alt); border-bottom: 2px solid var(--border); }
-    .editor-title { font-weight: 700; font-size: 1rem; color: var(--text); }
-    .char-count { font-size: 0.875rem; color: var(--text-light); font-weight: 500; }
-
-    .copy-btn-small { padding: 0.4rem 0.75rem; border: 1px solid var(--border); background: var(--surface); border-radius: 6px; font-size: 0.875rem; cursor: pointer; font-weight: 500; transition: all 0.2s; }
-    .copy-btn-small:hover { background: var(--surface-alt); border-color: var(--primary); }
-
-    textarea { width: 100%; flex: 1; padding: 1.25rem; border: none; resize: vertical; font-size: 1.0625rem; line-height: 1.7; color: var(--text); background: var(--surface); min-height: 200px; }
-    textarea:focus { outline: none; }
-    textarea::placeholder { color: var(--text-light); }
-    textarea[readonly] { background: var(--surface-alt); }
-
-    /* Swap Button Styles */
-    .swap-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin: -2.5rem auto; /* 定位到兩框中間 */
-      z-index: 5;
-    }
-
-    .swap-btn {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      border: 2px solid var(--border);
-      background: var(--surface);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-      color: var(--text-secondary);
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    }
-
-    .swap-btn:hover {
-      background: var(--primary);
-      color: white;
-      border-color: var(--primary);
-      transform: rotate(180deg);
-      box-shadow: 0 6px 12px rgba(37, 99, 235, 0.2);
-    }
-
-    /* Actions */
-    .actions { display: flex; gap: 1rem; align-items: center; }
-    .btn { padding: 0.875rem 2rem; border: none; border-radius: 8px; font-size: 1.0625rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.5rem; }
-    .btn-primary { background: var(--primary); color: white; }
-    .btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
-    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-    .btn-secondary { background: var(--surface); color: var(--text-secondary); border: 2px solid var(--border); }
-    .btn-secondary:hover { background: var(--surface-alt); border-color: var(--text-light); }
-
-    /* Status */
-    .status { margin-top: 1.5rem; padding: 1rem 1.25rem; border-radius: 8px; font-weight: 600; font-size: 1rem; display: none; align-items: center; gap: 0.75rem; }
-    .status.show { display: flex; }
-    .status.loading { background: var(--primary-light); color: var(--primary); border: 2px solid var(--primary); }
-    .status.success { background: #d1fae5; color: var(--success); border: 2px solid var(--success); }
-    .status.error { background: #fee2e2; color: var(--error); border: 2px solid var(--error); }
-
-    /* Modal */
-    .modal { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
-    .modal.active { display: flex; }
-    .modal-content { background: var(--surface); padding: 2rem; border-radius: 16px; width: 100%; max-width: 500px; box-shadow: var(--shadow-lg); border: 2px solid var(--border); }
-    .modal-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; color: var(--text); }
-    .modal-text { color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.6; }
-    .modal-text a { color: var(--primary); font-weight: 600; text-decoration: underline; }
-    
-    .modal input { width: 100%; padding: 1rem; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem; margin-bottom: 1.5rem; }
-    .modal input:focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--primary-light); }
-
-    .fake-password {
-      font-family: monospace;
-      letter-spacing: 2px;
-      -webkit-text-security: disc;
-      -moz-text-security: disc;
-      text-security: disc;
-    }
-
-    .modal-buttons { display: flex; gap: 1rem; }
-    .modal-buttons button { flex: 1; padding: 0.875rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
-    .modal-buttons .btn-confirm { background: var(--primary); color: white; }
-    .modal-buttons .btn-confirm:hover { background: var(--primary-hover); }
-    .modal-buttons .btn-cancel { background: var(--surface-alt); color: var(--text-secondary); border: 2px solid var(--border); }
-    .modal-buttons .btn-cancel:hover { background: var(--surface); border-color: var(--text-light); }
-
-    .footer { margin-top: 3rem; padding: 1.5rem; text-align: center; color: var(--text-light); font-size: 0.875rem; border-top: 2px solid var(--border); }
-    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI 翻譯與寫作專家 | Groq LPU</title>
+<style>
+  :root{
+    --blue:#2563eb; --blue-dark:#1d4ed8;
+    --bg:#f2f4f8; --border:#d7dbe0; --text:#202124; --muted:#5f6368;
+    --green-bg:#d9f2e3; --green-border:#1e8e5a;
+    --red-bg:#fdecea; --red-border:#d93025; --red-text:#c5221f;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI","Microsoft JhengHei","Noto Sans TC",sans-serif;background:var(--bg);color:var(--text);}
+  .wrap{max-width:1160px;margin:0 auto;padding:20px 24px 40px;}
+  .tabs{display:inline-flex;background:#fff;border:1px solid var(--border);border-radius:12px;padding:6px;gap:4px;margin-bottom:18px;}
+  .tab{border:0;background:transparent;padding:10px 22px;border-radius:9px;font-size:15px;cursor:pointer;color:var(--muted);}
+  .tab.active{background:var(--blue);color:#fff;font-weight:600;}
+  .banner{border-radius:10px;padding:14px 18px;text-align:center;font-size:15px;margin-bottom:18px;border:1px solid transparent;}
+  .banner.key-ok{background:var(--green-bg);border-color:var(--green-border);color:#08503c;cursor:pointer;}
+  .banner.key-missing{background:#fff3cd;border-color:#e0a800;color:#7a5c00;cursor:pointer;}
+  .banner.error{background:var(--red-bg);border-color:var(--red-border);color:var(--red-text);text-align:left;margin-top:22px;}
+  .lang-row{display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap;}
+  select{padding:12px 14px;border:1px solid var(--border);border-radius:8px;background:#fff;font-size:15px;min-width:220px;}
+  .swap{width:44px;height:44px;border-radius:50%;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:18px;}
+  .swap:disabled{opacity:.4;cursor:not-allowed;}
+  .model-badge{margin-left:auto;background:#e8eaed;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-family:Consolas,monospace;font-size:13px;}
+  .panes{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+  .pane{background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;}
+  .pane-head{display:flex;justify-content:space-between;align-items:center;background:#f1f3f4;border-bottom:1px solid var(--border);padding:10px 14px;font-weight:600;}
+  .pane-head .count{font-weight:400;color:var(--muted);font-size:13px;}
+  .pane-head button{border:1px solid var(--border);background:#fff;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:13px;color:var(--muted);}
+  textarea{border:0;outline:none;resize:vertical;min-height:280px;padding:14px;font-size:16px;line-height:1.6;font-family:inherit;background:#fafbfc;}
+  .actions{display:flex;gap:14px;margin-top:22px;}
+  .btn{border-radius:8px;padding:12px 26px;font-size:15px;cursor:pointer;border:1px solid var(--border);background:#fff;}
+  .btn.primary{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600;}
+  .btn.primary:disabled{opacity:.6;cursor:not-allowed;}
+  footer{border-top:1px solid var(--border);margin-top:36px;padding-top:18px;text-align:center;color:var(--muted);font-size:13px;line-height:1.8;}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:50;}
+  .modal[hidden]{display:none;}
+  .modal-box{background:#fff;border-radius:12px;padding:26px 28px;width:min(440px,92vw);box-shadow:0 12px 40px rgba(0,0,0,.25);}
+  .modal-box h3{margin:0 0 8px;}
+  .modal-box p{margin:0 0 14px;color:var(--muted);font-size:14px;}
+  .modal-box input{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px;}
+  @media(max-width:800px){.panes{grid-template-columns:1fr}.model-badge{margin-left:0}}
+</style>
 </head>
 <body>
-  <div class="container">
-    <div class="tabs" role="tablist">
-      <button class="tab active" role="tab" aria-selected="true" data-mode="translate"><span>🌐</span> 翻譯</button>
-      <button class="tab" role="tab" aria-selected="false" data-mode="polish"><span>✍️</span> 專家寫作</button>
-      <button class="tab" role="tab" aria-selected="false" data-mode="refine"><span>✨</span> 文稿潤飾</button>
+<div class="wrap">
+
+  <div class="tabs">
+    <button class="tab active" data-mode="translate">🌐 翻譯</button>
+    <button class="tab" data-mode="write">✍️ 專家寫作</button>
+    <button class="tab" data-mode="polish">✨ 文稿潤飾</button>
+  </div>
+
+  <div id="keyBanner" class="banner key-missing">🔑 尚未設定 Groq API Key｜點擊此處輸入</div>
+
+  <!-- 翻譯面板 -->
+  <section id="panel-translate">
+    <div class="lang-row">
+      <select id="srcLang">
+        <option value="auto">自動偵測</option>
+        <option value="English">英文</option>
+        <option value="Traditional Chinese">繁體中文</option>
+        <option value="Japanese">日文</option>
+        <option value="Korean">韓文</option>
+        <option value="French">法文</option>
+        <option value="German">德文</option>
+        <option value="Spanish">西班牙文</option>
+      </select>
+      <button class="swap" id="swapBtn" title="交換語言">⇄</button>
+      <select id="dstLang">
+        <option value="Traditional Chinese" selected>繁體中文</option>
+        <option value="English">英文</option>
+        <option value="Japanese">日文</option>
+        <option value="Korean">韓文</option>
+        <option value="French">法文</option>
+        <option value="German">德文</option>
+        <option value="Spanish">西班牙文</option>
+      </select>
+      <span class="model-badge" id="modelBadge">qwen/qwen3.8-27b</span>
     </div>
-
-    <div class="api-banner" id="apiBanner" role="button" tabindex="0">
-      <span>🔑</span> <span id="apiBannerText">尚未設定 Groq API Key｜點擊此處輸入</span>
-    </div>
-
-    <div class="controls">
-      <div class="select-wrapper">
-        <select id="sourceLang" aria-label="來源語言">
-          <option value="auto">自動偵測</option>
-          <option value="English">英文</option>
-          <option value="Traditional Chinese">繁體中文</option>
-          <option value="Japanese">日文</option>
-          <option value="Korean">韓文</option>
-          <option value="French">法文</option>
-          <option value="German">德文</option>
-          <option value="Spanish">西班牙文</option>
-        </select>
+    <div class="panes">
+      <div class="pane">
+        <div class="pane-head"><span>原文</span><span class="count" id="charCount">0 字</span></div>
+        <textarea id="srcText" placeholder="請輸入要翻譯的文字..."></textarea>
       </div>
-
-      <div class="swap-container">
-        <button class="swap-btn" id="swapBtn" aria-label="交換語言與文字" title="交換原文與譯文">
-          ⇄
-        </button>
-      </div>
-
-      <div class="select-wrapper">
-        <select id="targetLang" aria-label="目標語言">
-          <option value="Traditional Chinese">繁體中文</option>
-          <option value="English">英文</option>
-          <option value="Japanese">日文</option>
-          <option value="Korean">韓文</option>
-          <option value="French">法文</option>
-          <option value="German">德文</option>
-          <option value="Spanish">西班牙文</option>
-        </select>
-      </div>
-
-      <div class="model-badge">qwen-3.6-27b</div>
-    </div>
-
-    <div class="editor-wrapper">
-      <div class="editor-box">
-        <div class="editor-header">
-          <span class="editor-title">原文</span>
-          <span class="char-count" id="inputCharCount">0 字</span>
-        </div>
-        <textarea id="inputText" placeholder="輸入需要翻譯的文字..." aria-label="原文輸入"></textarea>
-      </div>
-
-      <div class="editor-box">
-        <div class="editor-header">
-          <span class="editor-title">譯文</span>
-          <button class="copy-btn-small" id="copyBtn" disabled>複製</button>
-        </div>
-        <textarea id="outputText" placeholder="翻譯結果將顯示於此..." readonly aria-label="譯文顯示"></textarea>
+      <div class="pane">
+        <div class="pane-head"><span>譯文</span><button id="copyBtn">複製</button></div>
+        <textarea id="dstText" readonly placeholder="翻譯結果將顯示於此..."></textarea>
       </div>
     </div>
-
     <div class="actions">
-      <button class="btn btn-primary" id="btnRun"><span>⚡</span> <span id="btnRunText">翻譯</span></button>
-      <button class="btn btn-secondary" id="btnClear"><span>🗑️</span> 清除</button>
+      <button class="btn primary" id="translateBtn">⚡ 翻譯</button>
+      <button class="btn" id="clearBtn">🗑️ 清除</button>
     </div>
+  </section>
 
-    <div class="status" id="status" role="alert" aria-live="polite"></div>
-
-    <div class="footer">
-      使用 Groq API 免費服務｜每分鐘限流約 30 次請求<br>
-      API Key 僅儲存於瀏覽器 Session，關閉分頁自動清除
-    </div>
-  </div>
-
-  <div class="modal" id="apiModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal-content">
-      <h2 class="modal-title" id="modalTitle"> 輸入 Groq API Key</h2>
-      <p class="modal-text">
-        請至 <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a> 建立金鑰
-      </p>
-      <!-- 使用 fake-password 類別模擬密碼框視覺效果 -->
-      <input type="text" id="apiKeyInput" class="fake-password" placeholder="gsk_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" aria-label="Groq API Key">
-      <div class="modal-buttons">
-        <button class="btn-confirm" id="saveKey">儲存</button>
-        <button class="btn-cancel" id="closeModal">取消</button>
+  <!-- 專家寫作面板 -->
+  <section id="panel-write" hidden>
+    <div class="panes">
+      <div class="pane">
+        <div class="pane-head"><span>寫作需求</span></div>
+        <textarea id="writeInput" placeholder="請描述寫作主題、風格、篇幅與需求..."></textarea>
+      </div>
+      <div class="pane">
+        <div class="pane-head"><span>成品</span><button id="copyWriteBtn">複製</button></div>
+        <textarea id="writeOutput" readonly placeholder="寫作結果將顯示於此..."></textarea>
       </div>
     </div>
+    <div class="actions">
+      <button class="btn primary" id="writeBtn">⚡ 產生</button>
+      <button class="btn" id="writeClearBtn">🗑️ 清除</button>
+    </div>
+  </section>
+
+  <!-- 文稿潤飾面板 -->
+  <section id="panel-polish" hidden>
+    <div class="panes">
+      <div class="pane">
+        <div class="pane-head"><span>原文</span></div>
+        <textarea id="polishInput" placeholder="請貼上需要潤飾的文稿..."></textarea>
+      </div>
+      <div class="pane">
+        <div class="pane-head"><span>潤飾結果</span><button id="copyPolishBtn">複製</button></div>
+        <textarea id="polishOutput" readonly placeholder="潤飾結果將顯示於此..."></textarea>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="polishBtn">⚡ 潤飾</button>
+      <button class="btn" id="polishClearBtn">🗑️ 清除</button>
+    </div>
+  </section>
+
+  <div id="errorBanner" class="banner error" hidden></div>
+
+  <footer>
+    使用 Groq API 免費服務｜每分鐘限流約 30 次請求<br>
+    API Key 僅儲存於瀏覽器 Session，關閉分頁自動清除
+  </footer>
+</div>
+
+<!-- API Key 彈窗 -->
+<div id="modal" class="modal" hidden>
+  <div class="modal-box">
+    <h3>輸入 Groq API Key</h3>
+    <p>請至 <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a> 建立金鑰</p>
+    <input type="password" id="keyInput" placeholder="gsk_..." autocomplete="off" />
+    <div class="modal-actions">
+      <button class="btn primary" id="saveKeyBtn">儲存</button>
+      <button class="btn" id="cancelKeyBtn">取消</button>
+    </div>
   </div>
+</div>
 
-  <script>
-    const state = { mode: 'translate', apiKey: sessionStorage.getItem('groq_api_key') || '' };
+<script>
+/* =====================================================
+   ✅ 修正重點：Groq 已不提供 qwen-3.6-27b，
+   改為目前支援的 qwen/qwen3.8-27b
+   ===================================================== */
+const MODEL   = "qwen/qwen3.8-27b";
+const API_URL = "https://api.groq.com/openai/v1/chat/completions";
+const KEY_SLOT = "groq_api_key";
 
-    const els = {
-      tabs: document.querySelectorAll('.tab'),
-      apiBanner: document.getElementById('apiBanner'),
-      apiBannerText: document.getElementById('apiBannerText'),
-      modal: document.getElementById('apiModal'),
-      apiKeyInput: document.getElementById('apiKeyInput'),
-      saveKey: document.getElementById('saveKey'),
-      closeModal: document.getElementById('closeModal'),
-      sourceLang: document.getElementById('sourceLang'),
-      targetLang: document.getElementById('targetLang'),
-      swapBtn: document.getElementById('swapBtn'),
-      inputText: document.getElementById('inputText'),
-      outputText: document.getElementById('outputText'),
-      inputCharCount: document.getElementById('inputCharCount'),
-      btnRun: document.getElementById('btnRun'),
-      btnRunText: document.getElementById('btnRunText'),
-      btnClear: document.getElementById('btnClear'),
-      copyBtn: document.getElementById('copyBtn'),
-      status: document.getElementById('status')
-    };
+const $ = id => document.getElementById(id);
+const keyBanner = $("keyBanner"), modal = $("modal"), keyInput = $("keyInput");
+const errorBanner = $("errorBanner");
+const srcLang = $("srcLang"), dstLang = $("dstLang"), swapBtn = $("swapBtn");
+const srcText = $("srcText"), dstText = $("dstText"), charCount = $("charCount");
 
-    function init() {
-      if (state.apiKey) {
-        els.apiBanner.classList.add('set');
-        els.apiBannerText.textContent = '✅ Groq API Key 已設定（點擊可更換）';
-      }
-      updateModeUI();
-    }
+$("modelBadge").textContent = MODEL;
 
-    els.tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        els.tabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
-        tab.classList.add('active');
-        tab.setAttribute('aria-selected', 'true');
-        state.mode = tab.dataset.mode;
-        updateModeUI();
-      });
+/* ---------- API Key 管理（Session 儲存） ---------- */
+const getKey = () => sessionStorage.getItem(KEY_SLOT) || "";
+function refreshKeyBanner(){
+  if (getKey()){
+    keyBanner.className = "banner key-ok";
+    keyBanner.textContent = "🔑 ✅ Groq API Key 已設定（點擊可更換）";
+  } else {
+    keyBanner.className = "banner key-missing";
+    keyBanner.textContent = "🔑 尚未設定 Groq API Key｜點擊此處輸入";
+  }
+}
+keyBanner.onclick = () => { keyInput.value = getKey(); modal.hidden = false; keyInput.focus(); };
+$("cancelKeyBtn").onclick = () => modal.hidden = true;
+$("saveKeyBtn").onclick = () => {
+  const v = keyInput.value.trim();
+  if (v) sessionStorage.setItem(KEY_SLOT, v); else sessionStorage.removeItem(KEY_SLOT);
+  modal.hidden = true; refreshKeyBanner();
+};
+refreshKeyBanner();
+
+/* ---------- 分頁切換 ---------- */
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    ["translate","write","polish"].forEach(m => {
+      $("panel-" + m).hidden = (m !== tab.dataset.mode);
     });
+    hideError();
+  };
+});
 
-    function updateModeUI() {
-      const modeTexts = { translate: '翻譯', polish: '專家寫作', refine: '文稿潤飾' };
-      els.btnRunText.textContent = modeTexts[state.mode];
-    }
+/* ---------- 小工具 ---------- */
+function showError(msg){ errorBanner.textContent = "❌ " + msg; errorBanner.hidden = false; }
+function hideError(){ errorBanner.hidden = true; }
+srcText.addEventListener("input", () => {
+  charCount.textContent = srcText.value.replace(/\s/g,"").length + " 字";
+});
+swapBtn.onclick = () => { const s = srcLang.value; srcLang.value = dstLang.value; dstLang.value = s; syncSwap(); };
+function syncSwap(){ swapBtn.disabled = (srcLang.value === "auto"); }
+srcLang.onchange = syncSwap; syncSwap();
 
-    // Modal Logic
-    els.apiBanner.addEventListener('click', openModal);
-    els.apiBanner.addEventListener('keypress', (e) => { if (e.key === 'Enter') openModal(); });
+function bindCopy(btnId, taId){
+  $(btnId).onclick = async () => {
+    const ta = $(taId); if (!ta.value) return;
+    try { await navigator.clipboard.writeText(ta.value); } catch(e){ ta.select(); document.execCommand("copy"); }
+  };
+}
+bindCopy("copyBtn","dstText"); bindCopy("copyWriteBtn","writeOutput"); bindCopy("copyPolishBtn","polishOutput");
 
-    function openModal() {
-      els.modal.classList.add('active');
-      els.apiKeyInput.focus();
-    }
+/* ---------- Groq API 呼叫 ---------- */
+async function callGroq(messages){
+  const key = getKey();
+  if (!key){ modal.hidden = false; keyInput.focus(); throw new Error("尚未設定 Groq API Key"); }
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer " + key,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model: MODEL,          // ✅ qwen/qwen3.8-27b
+      messages: messages,
+      temperature: 0.3
+    })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok){
+    const msg = (data && data.error && data.error.message) || ("HTTP " + res.status);
+    throw new Error(msg);
+  }
+  return data.choices[0].message.content;
+}
 
-    els.closeModal.addEventListener('click', () => { els.modal.classList.remove('active'); els.apiKeyInput.value = ''; });
-    
-    els.saveKey.addEventListener('click', () => {
-      const key = els.apiKeyInput.value.trim();
-      if (!key.startsWith('gsk_')) { alert('❌ Groq 金鑰格式應以 gsk_ 開頭'); return; }
-      state.apiKey = key;
-      sessionStorage.setItem('groq_api_key', key);
-      els.apiBanner.classList.add('set');
-      els.apiBannerText.textContent = '✅ Groq API Key 已設定（點擊可更換）';
-      els.modal.classList.remove('active');
-      els.apiKeyInput.value = '';
-    });
+async function run(btn, outTa, messages, placeholder){
+  hideError();
+  btn.disabled = true;
+  outTa.value = ""; outTa.placeholder = placeholder || "處理中...";
+  try {
+    outTa.value = await callGroq(messages);
+    outTa.placeholder = placeholder;
+  } catch(e){
+    showError("錯誤: " + e.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
 
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && els.modal.classList.contains('active')) els.modal.classList.remove('active'); });
+/* ---------- 翻譯 ---------- */
+$("translateBtn").onclick = () => {
+  const text = srcText.value.trim();
+  if (!text) return;
+  const s = srcLang.value === "auto" ? "the auto-detected source language" : srcLang.value;
+  const d = dstLang.value;
+  run($("translateBtn"), dstText, [
+    { role: "system", content: "You are a professional translator. Translate the user's text from " + s + " to " + d + ". Output only the translated text, without explanations or notes." },
+    { role: "user", content: text }
+  ], "翻譯結果將顯示於此...");
+};
+$("clearBtn").onclick = () => { srcText.value = ""; dstText.value = ""; charCount.textContent = "0 字"; hideError(); };
 
-    // 互換功能：交換原文/譯文文字 + 語言選項
-    els.swapBtn.addEventListener('click', () => {
-      // 1. 交換文字內容
-      const tempText = els.inputText.value;
-      els.inputText.value = els.outputText.value;
-      els.outputText.value = tempText;
-      
-      // 更新字數統計
-      els.inputCharCount.textContent = `${els.inputText.value.length} 字`;
+/* ---------- 專家寫作 ---------- */
+$("writeBtn").onclick = () => {
+  const text = $("writeInput").value.trim();
+  if (!text) return;
+  run($("writeBtn"), $("writeOutput"), [
+    { role: "system", content: "You are an expert professional writer. Follow the user's requirements and produce high-quality, well-structured content. Output only the finished content." },
+    { role: "user", content: text }
+  ], "寫作結果將顯示於此...");
+};
+$("writeClearBtn").onclick = () => { $("writeInput").value = ""; $("writeOutput").value = ""; hideError(); };
 
-      // 2. 交換語言選項（僅當來源語言不是自動偵測時生效）
-      if (els.sourceLang.value !== 'auto') {
-        const tempLang = els.sourceLang.value;
-        els.sourceLang.value = els.targetLang.value;
-        els.targetLang.value = tempLang;
-      }
-    });
-
-    els.inputText.addEventListener('input', () => { els.inputCharCount.textContent = `${els.inputText.value.length} 字`; });
-
-    els.btnRun.addEventListener('click', async () => {
-      if (!state.apiKey) { alert('️ 請先設定 Groq API Key'); openModal(); return; }
-      const text = els.inputText.value.trim();
-      if (!text) { alert('⚠️ 請輸入文字'); els.inputText.focus(); return; }
-
-      els.btnRun.disabled = true;
-      els.outputText.value = '';
-      els.copyBtn.disabled = true;
-      showStatus('loading', '⏳ 正在處理中...');
-
-      const src = els.sourceLang.value === 'auto' ? 'auto-detected' : els.sourceLang.value;
-      const tgt = els.targetLang.value;
-
-      let systemPrompt;
-      if (state.mode === 'translate') {
-        systemPrompt = `You are a professional translator. Translate the user's text from ${src} to ${tgt}. Preserve original meaning, tone, and formatting. Output ONLY the translated text.`;
-      } else if (state.mode === 'polish') {
-        systemPrompt = `You are an expert writer. Create professional, engaging content in ${tgt}. Ensure clarity, proper grammar, and natural flow. Output ONLY the refined text.`;
-      } else {
-        systemPrompt = `You are an expert editor. Refine and polish the following ${tgt} text for clarity, grammar, and professionalism. Maintain original intent. Output ONLY the revised text.`;
-      }
-
-      systemPrompt += ' Do not include reasoning, analysis, explanations, or <think> tags. Return only the final answer.';
-
-      try {
-        // Groq API 已支援瀏覽器 CORS，可直接呼叫，避免第三方代理拒絕請求或接觸 API Key
-        const apiUrl = "https://api.groq.com/openai/v1/chat/completions";
-        
-        const res = await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${state.apiKey}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: 'qwen/qwen3.6-27b',
-            messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: text }],
-            reasoning_effort: 'none',
-            temperature: state.mode === 'translate' ? 0.2 : 0.5,
-            max_tokens: 4096
-          })
-        });
-
-        if (!res.ok) {
-          const err = await res.json().catch(() => null);
-          throw new Error(err?.error?.message || `HTTP ${res.status}`);
-        }
-        const data = await res.json();
-        const rawOutput = data.choices[0].message.content || '';
-        const cleanOutput = rawOutput.replace(/<think>[\s\S]*?<\/think>\s*/gi, '').trim();
-        els.outputText.value = cleanOutput || rawOutput.trim();
-        els.copyBtn.disabled = false;
-        showStatus('success', '✅ 完成！');
-      } catch (error) {
-        console.error(error);
-        showStatus('error', `❌ 錯誤: ${error.message}`);
-      } finally {
-        els.btnRun.disabled = false;
-      }
-    });
-
-    els.copyBtn.addEventListener('click', () => {
-      navigator.clipboard.writeText(els.outputText.value);
-      const originalText = els.copyBtn.textContent;
-      els.copyBtn.textContent = '✓ 已複製';
-      setTimeout(() => { els.copyBtn.textContent = originalText; }, 2000);
-    });
-
-    els.btnClear.addEventListener('click', () => {
-      els.inputText.value = ''; 
-      els.outputText.value = '';
-      els.inputCharCount.textContent = '0 字'; 
-      els.copyBtn.disabled = true; 
-      hideStatus();
-      els.inputText.focus();
-    });
-
-    function showStatus(type, message) { 
-      els.status.className = `status show ${type}`; 
-      els.status.textContent = message; 
-    }
-    function hideStatus() { els.status.classList.remove('show'); }
-
-    init();
-  </script>
+/* ---------- 文稿潤飾 ---------- */
+$("polishBtn").onclick = () => {
+  const text = $("polishInput").value.trim();
+  if (!text) return;
+  run($("polishBtn"), $("polishOutput"), [
+    { role: "system", content: "You are a professional editor. Polish and refine the user's text: improve fluency, clarity and tone while preserving the original meaning and language. Output only the polished text." },
+    { role: "user", content: text }
+  ], "潤飾結果將顯示於此...");
+};
+$("polishClearBtn").onclick = () => { $("polishInput").value = ""; $("polishOutput").value = ""; hideError(); };
+</script>
 </body>
 </html>
