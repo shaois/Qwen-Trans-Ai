@@ -158,8 +158,7 @@
 
 <script>
 /* =====================================================
-   ✅ 修正重點：Groq 已不提供 qwen-3.6-27b，
-   改為目前支援的 qwen/qwen3.8-27b
+   模型：Groq 支援的 qwen/qwen3.8-27b
    ===================================================== */
 const MODEL   = "qwen/qwen3.8-27b";
 const API_URL = "https://api.groq.com/openai/v1/chat/completions";
@@ -202,8 +201,25 @@ document.querySelectorAll(".tab").forEach(tab => {
       $("panel-" + m).hidden = (m !== tab.dataset.mode);
     });
     hideError();
+    carryOverSource(tab.dataset.mode);   // ✅ 新增：切換時帶入原文
   };
 });
+
+/* =====================================================
+   ✅ 新功能：切換到「專家寫作」或「文稿潤飾」時，
+   自動把翻譯頁的「原文」直接帶入對應輸入欄
+   ===================================================== */
+function carryOverSource(mode){
+  const src = srcText.value;
+  if (!src.trim()) return;   // 原文為空時不帶入
+  if (mode === "write")  $("writeInput").value  = src;
+  if (mode === "polish") $("polishInput").value = src;
+
+  // 若您希望「輸入欄已有內容時不要覆蓋」，
+  // 請把上面兩行改成以下寫法：
+  // if (mode === "write"  && !$("writeInput").value.trim())  $("writeInput").value  = src;
+  // if (mode === "polish" && !$("polishInput").value.trim()) $("polishInput").value = src;
+}
 
 /* ---------- 小工具 ---------- */
 function showError(msg){ errorBanner.textContent = "❌ " + msg; errorBanner.hidden = false; }
@@ -234,7 +250,7 @@ async function callGroq(messages){
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      model: MODEL,          // ✅ qwen/qwen3.8-27b
+      model: MODEL,
       messages: messages,
       temperature: 0.3
     })
